@@ -6,6 +6,15 @@
     "displayName": "The Composite Team site",
     "description": "This site: the team's profiles, walls and story.",
     "public": true,
-    "agents": [{ "slug": "scout", "role": "contributor" }]
+    "agents": [
+      {
+        "slug": "scout",
+        "role": "contributor"
+      },
+      {
+        "slug": "qa-tester-agent-john",
+        "role": "qa"
+      }
+    ]
   }
 ]
