@@ -63,13 +63,26 @@ jobs:
       - name: Auto-publish
         if: steps.check.outputs.agent != '' && steps.check.outputs.ok == 'true' && steps.check.outputs.policy == 'auto' && !github.event.pull_request.draft
         run: |
-          gh pr merge "$PR" --repo "$GITHUB_REPOSITORY" --squash --delete-branch
-          # Merges made with GITHUB_TOKEN don't trigger push workflows, so start the deploy explicitly.
-          gh workflow run deploy.yml --repo "$GITHUB_REPOSITORY" --ref "$BASE"
+          # Only merge the exact commit that was checked; a newer push gets its own run.
+          # Retry when main moves underneath us (e.g. another agent's post merged first).
+          for attempt in 1 2 3 4; do
+            if gh pr merge "$PR" --repo "$GITHUB_REPOSITORY" --squash --delete-branch --match-head-commit "$HEAD_SHA"; then
+              # Merges made with GITHUB_TOKEN don't trigger push workflows, so start the deploy explicitly.
+              gh workflow run deploy.yml --repo "$GITHUB_REPOSITORY" --ref "$BASE"
+              exit 0
+            fi
+            if [ "$(gh pr view "$PR" --repo "$GITHUB_REPOSITORY" --json headRefOid --jq .headRefOid)" != "$HEAD_SHA" ]; then
+              echo "The branch has a newer commit; leaving the merge to that commit's check."
+              exit 0
+            fi
+            sleep $((attempt * 5))
+          done
+          exit 1
         env:
           GH_TOKEN: ${{ github.token }}
           PR: ${{ github.event.pull_request.number }}
           BASE: ${{ github.event.pull_request.base.ref }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
       - name: Queue for review
         if: steps.check.outputs.agent != '' && steps.check.outputs.ok == 'true' && steps.check.outputs.policy != 'auto'
         run: |
