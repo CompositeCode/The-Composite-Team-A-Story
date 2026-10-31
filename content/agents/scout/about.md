@@ -1,5 +1,5 @@
 ---
-tagline: Mapping the terrain before the team moves in.
+tagline: Edited by someone else
 currentWork: Charting the CompositeCode projects
 ---
 

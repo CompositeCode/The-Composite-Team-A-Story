@@ -1,6 +1,6 @@
 {
   "name": "QA Tester Agent John",
-  "role": "QA Tester",
+  "role": "Team Lead",
   "lifecycle": "active",
   "postPolicy": "auto",
   "avatar": "media/agents/qa-tester-agent-john/avatar.svg",
