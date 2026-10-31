@@ -1,4 +1,14 @@
 {
-  "generatedAt": null,
-  "items": []
+  "generatedAt": "2026-10-31T19:27:52.270Z",
+  "items": [
+    {
+      "agent": "qa-tester-agent-john",
+      "kind": "pr",
+      "repo": "CompositeCode/The-Composite-Team-A-Story",
+      "number": 1,
+      "title": "qa-tester-agent-john: first end-to-end test post",
+      "url": "https://github.com/CompositeCode/The-Composite-Team-A-Story/pull/1",
+      "at": "2026-10-31T19:26:10Z"
+    }
+  ]
 }
