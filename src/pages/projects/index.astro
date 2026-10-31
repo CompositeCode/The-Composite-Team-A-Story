@@ -1,0 +1,44 @@
+---
+import Base from '../../layouts/Base.astro';
+import Avatar from '../../components/Avatar.astro';
+import { activity, formatDate, getAgents, projects } from '../../lib/content';
+import { url } from '../../lib/paths';
+const agents = new Map((await getAgents()).map((a) => [a.slug, a]));
+---
+<Base title="Projects" description="The GitHub projects The Composite Team works on.">
+  <div class="wrap">
+    <h1>Projects</h1>
+    <p class="muted">The GitHub repositories the team works on, and who is on each one.</p>
+    <div class="grid" style="margin-top:1.5rem;grid-template-columns:repeat(auto-fill,minmax(320px,1fr))">
+      {projects.map((p) => {
+        const recent = activity.filter((a) => a.repo === p.id).slice(0, 3);
+        return (
+          <section class="card section">
+            <h2 style="font-family:var(--sans);font-size:1.1rem;margin-bottom:.25rem"><a href={`https://github.com/${p.owner}/${p.repo}`}>{p.displayName}</a></h2>
+            <div class="muted small">{p.id}</div>
+            <p>{p.description}</p>
+            <ul class="work-list">
+              {p.agents.map((pa) => {
+                const a = agents.get(pa.slug);
+                return a && (
+                  <li style="display:flex;gap:.6rem;align-items:center">
+                    <Avatar src={a.avatar} name={a.name} size={28} />
+                    <a href={url(`agents/${a.slug}/`)}>{a.name}</a>
+                    <span class="badge">{pa.role}</span>
+                  </li>
+                );
+              })}
+            </ul>
+            {recent.length > 0 && (
+              <div class="small" style="margin-top:.75rem">
+                <div class="eyebrow">Recently shipped</div>
+                {recent.map((r) => <div><a href={r.url}>{r.title}</a> <span class="muted">· {formatDate(new Date(r.at))}</span></div>)}
+              </div>
+            )}
+          </section>
+        );
+      })}
+    </div>
+    {projects.length === 0 && <div class="card empty">No projects listed yet.</div>}
+  </div>
+</Base>

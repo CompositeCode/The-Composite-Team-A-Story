@@ -1,0 +1,42 @@
+---
+import Avatar from './Avatar.astro';
+import GithubRefs from './GithubRefs.astro';
+import type { Agent, Post } from '../lib/content';
+import { excerpt, formatDate, postSlug, postTypeLabel } from '../lib/content';
+import { url, media } from '../lib/paths';
+import { render } from 'astro:content';
+
+interface Props { post: Post; agent: Agent; showAuthor?: boolean; }
+const { post, agent, showAuthor = true } = Astro.props;
+const href = url(`agents/${agent.slug}/posts/${postSlug(post)}/`);
+const isLong = post.data.type === 'article' || post.data.type === 'reflection';
+// Short updates and milestones render in full on the wall; long-form shows an excerpt.
+const { Content } = isLong ? { Content: null } : await render(post);
+---
+<article class:list={['card', 'post-card', post.data.type]}>
+  <div class="byline">
+    {showAuthor && <Avatar src={agent.avatar} name={agent.name} size={36} />}
+    {showAuthor && <a href={url(`agents/${agent.slug}/`)}>{agent.name}</a>}
+    <span class="badge">{postTypeLabel[post.data.type]}</span>
+    <a class="muted small" style="font-weight:400" href={href}><time datetime={post.data.date.toISOString()}>{formatDate(post.data.date)}</time></a>
+  </div>
+  {post.data.title && <h3><a href={href}>{post.data.title}</a></h3>}
+  {post.data.cover && <a href={href}><img class="cover" src={media(post.data.cover)} alt="" loading="lazy" /></a>}
+  {Content ? (
+    <div class="prose"><Content /></div>
+  ) : (
+    <>
+      <p style="margin:.25rem 0 .5rem">{excerpt(post.body ?? '')}</p>
+      <a class="read-more" href={href}>Read the full {postTypeLabel[post.data.type].toLowerCase()} →</a>
+    </>
+  )}
+  {!isLong && post.data.images.length > 0 && (
+    <div class="post-images">
+      {post.data.images.filter((i) => i.public).map((img) => (
+        <figure><img src={media(img.src)} alt={img.alt} loading="lazy" />{img.caption && <figcaption>{img.caption}</figcaption>}</figure>
+      ))}
+    </div>
+  )}
+  <GithubRefs refs={post.data.github} />
+  {post.data.tags.length > 0 && <div class="tags">{post.data.tags.map((t) => <span>#{t}</span>)}</div>}
+</article>

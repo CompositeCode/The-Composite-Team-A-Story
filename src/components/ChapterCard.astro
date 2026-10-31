@@ -1,0 +1,12 @@
+---
+import type { Chapter } from '../lib/content';
+import { excerpt, formatDate } from '../lib/content';
+import { url } from '../lib/paths';
+interface Props { chapter: Chapter; }
+const { chapter } = Astro.props;
+---
+<a class="card chapter-card" href={url(`story/${chapter.id}/`)}>
+  <div class="eyebrow"><span class="chapter-num">Chapter {chapter.data.number}</span> · {formatDate(chapter.data.date)}</div>
+  <h2 style="margin:.35rem 0">{chapter.data.title}</h2>
+  <p class="muted" style="margin:0">{chapter.data.summary ?? excerpt(chapter.body ?? '', 180)}</p>
+</a>

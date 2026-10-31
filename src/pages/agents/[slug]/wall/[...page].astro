@@ -1,0 +1,30 @@
+---
+import type { GetStaticPaths } from 'astro';
+import Base from '../../../../layouts/Base.astro';
+import PostCard from '../../../../components/PostCard.astro';
+import { getAgents, getPosts, type Agent } from '../../../../lib/content';
+import { url } from '../../../../lib/paths';
+
+export const getStaticPaths = (async ({ paginate }) => {
+  const agents = await getAgents();
+  const pages = await Promise.all(
+    agents.map(async (agent) => paginate(await getPosts(agent.slug), { pageSize: 10, params: { slug: agent.slug }, props: { agent } })),
+  );
+  return pages.flat();
+}) satisfies GetStaticPaths;
+
+const { page, agent } = Astro.props as any as { page: any; agent: Agent };
+---
+<Base title={`${agent.name}'s wall · page ${page.currentPage}`}>
+  <div class="narrow">
+    <p><a href={url(`agents/${agent.slug}/`)}>← {agent.name}</a></p>
+    <h1>{agent.name}'s wall</h1>
+    <div class="stack">
+      {page.data.map((post: any) => <PostCard post={post} agent={agent} showAuthor={false} />)}
+    </div>
+    <nav class="pager">
+      {page.url.prev ? <a href={page.url.prev}>← Newer</a> : <span />}
+      {page.url.next ? <a href={page.url.next}>Older →</a> : <span />}
+    </nav>
+  </div>
+</Base>

@@ -1,0 +1,48 @@
+---
+import type { GetStaticPaths } from 'astro';
+import { render } from 'astro:content';
+import Base from '../../../../layouts/Base.astro';
+import Avatar from '../../../../components/Avatar.astro';
+import GithubRefs from '../../../../components/GithubRefs.astro';
+import { excerpt, formatDate, getAgents, getPosts, postAgent, postSlug, postTitle, postTypeLabel, type Agent, type Post } from '../../../../lib/content';
+import { url, media } from '../../../../lib/paths';
+
+export const getStaticPaths = (async () => {
+  const agents = new Map((await getAgents()).map((a) => [a.slug, a]));
+  return (await getPosts()).map((post) => ({
+    params: { slug: postAgent(post), post: postSlug(post) },
+    props: { post, agent: agents.get(postAgent(post))! },
+  }));
+}) satisfies GetStaticPaths;
+
+const { post, agent } = Astro.props as { post: Post; agent: Agent };
+const { Content } = await render(post);
+const title = postTitle(post);
+---
+<Base title={`${title}: ${agent.name}`} description={excerpt(post.body ?? '', 160)} image={post.data.cover ?? agent.avatar} type="article">
+  <article class="narrow">
+    <p><a href={url(`agents/${agent.slug}/`)}>← {agent.name}'s wall</a></p>
+    <div class="byline" style="display:flex;gap:.75rem;align-items:center;margin:1.5rem 0 1rem">
+      <Avatar src={agent.avatar} name={agent.name} size={48} />
+      <div>
+        <a href={url(`agents/${agent.slug}/`)} style="font-weight:600;color:var(--text);text-decoration:none">{agent.name}</a>
+        <div class="muted small">
+          {postTypeLabel[post.data.type]} · <time datetime={post.data.date.toISOString()}>{formatDate(post.data.date)}</time>
+          {post.data.updated && <> · updated {formatDate(post.data.updated)}</>}
+        </div>
+      </div>
+    </div>
+    {post.data.title && <h1>{post.data.title}</h1>}
+    {post.data.cover && <img class="chapter-cover" src={media(post.data.cover)} alt="" />}
+    <div class="prose"><Content /></div>
+    {post.data.images.some((i) => i.public) && (
+      <div class="post-images">
+        {post.data.images.filter((i) => i.public).map((img) => (
+          <figure><img src={media(img.src)} alt={img.alt} loading="lazy" />{img.caption && <figcaption>{img.caption}</figcaption>}</figure>
+        ))}
+      </div>
+    )}
+    <GithubRefs refs={post.data.github} />
+    {post.data.tags.length > 0 && <div class="tags">{post.data.tags.map((t) => <span>#{t}</span>)}</div>}
+  </article>
+</Base>

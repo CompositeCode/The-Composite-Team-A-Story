@@ -1,0 +1,38 @@
+---
+import type { Agent } from '../lib/content';
+import { media } from '../lib/paths';
+interface Props { images: Agent['gallery']; name: string; }
+const { images, name } = Astro.props;
+const visible = images.filter((i) => i.public);
+---
+{visible.length > 0 && (
+  <div class="gallery" data-gallery>
+    {visible.map((img) => (
+      <button type="button" data-src={media(img.src)} data-caption={img.caption ?? ''} data-alt={img.alt} aria-label={`Open image: ${img.alt || img.caption || name}`}>
+        <img src={media(img.src)} alt={img.alt} loading="lazy" />
+      </button>
+    ))}
+  </div>
+  <dialog class="lightbox" data-lightbox>
+    <form method="dialog"><button aria-label="Close">×</button></form>
+    <img alt="" />
+    <p></p>
+  </dialog>
+)}
+<script>
+  document.querySelectorAll<HTMLElement>('[data-gallery]').forEach((gallery) => {
+    const dialog = gallery.nextElementSibling as HTMLDialogElement | null;
+    if (!dialog) return;
+    const img = dialog.querySelector('img')!;
+    const caption = dialog.querySelector('p')!;
+    gallery.querySelectorAll<HTMLButtonElement>('button').forEach((btn) =>
+      btn.addEventListener('click', () => {
+        img.src = btn.dataset.src ?? '';
+        img.alt = btn.dataset.alt ?? '';
+        caption.textContent = btn.dataset.caption ?? '';
+        dialog.showModal();
+      }),
+    );
+    dialog.addEventListener('click', (e) => e.target === dialog && dialog.close());
+  });
+</script>

@@ -1,0 +1,31 @@
+---
+import type { GetStaticPaths } from 'astro';
+import { render } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+import { excerpt, formatDate, getChapters, type Chapter } from '../../lib/content';
+import { url, media } from '../../lib/paths';
+
+export const getStaticPaths = (async () => {
+  const chapters = await getChapters();
+  return chapters.map((chapter, i) => ({
+    params: { chapter: chapter.id },
+    props: { chapter, prev: chapters[i - 1], next: chapters[i + 1] },
+  }));
+}) satisfies GetStaticPaths;
+
+const { chapter, prev, next } = Astro.props as { chapter: Chapter; prev?: Chapter; next?: Chapter };
+const { Content } = await render(chapter);
+---
+<Base title={`Chapter ${chapter.data.number}: ${chapter.data.title}`} description={chapter.data.summary ?? excerpt(chapter.body ?? '', 160)} image={chapter.data.cover} type="article">
+  <article class="narrow">
+    <p><a href={url('story/')}>← The Story</a></p>
+    <div class="eyebrow" style="margin-top:1.5rem"><span class="chapter-num">Chapter {chapter.data.number}</span> · {formatDate(chapter.data.date)}</div>
+    <h1>{chapter.data.title}</h1>
+    {chapter.data.cover && <img class="chapter-cover" src={media(chapter.data.cover)} alt="" />}
+    <div class="prose"><Content /></div>
+    <nav class="pager">
+      {prev ? <a href={url(`story/${prev.id}/`)}>← {prev.data.title}</a> : <span />}
+      {next ? <a href={url(`story/${next.id}/`)}>{next.data.title} →</a> : <span />}
+    </nav>
+  </article>
+</Base>

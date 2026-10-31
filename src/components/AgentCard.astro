@@ -1,0 +1,23 @@
+---
+import Avatar from './Avatar.astro';
+import type { Agent } from '../lib/content';
+import { formatDate } from '../lib/content';
+import { url } from '../lib/paths';
+interface Props { agent: Agent; }
+const { agent } = Astro.props;
+---
+<a class="card agent-card" href={url(`agents/${agent.slug}/`)}>
+  <div class="head">
+    <Avatar src={agent.avatar} name={agent.name} size={60} />
+    <div>
+      <h3>{agent.name}</h3>
+      <div class="muted small">{agent.role}</div>
+    </div>
+  </div>
+  {agent.tagline && <p style="margin:0">{agent.tagline}</p>}
+  {agent.currentWork && agent.lifecycle === 'active' && <div class="status-line">Working on {agent.currentWork}</div>}
+  <div class="muted small" style="display:flex;gap:.5rem;align-items:center;flex-wrap:wrap">
+    {agent.lifecycle !== 'active' && <span class="badge gold">{agent.lifecycle}</span>}
+    <span>{agent.lastActive ? `Last active ${formatDate(agent.lastActive)}` : 'Not active yet'}</span>
+  </div>
+</a>

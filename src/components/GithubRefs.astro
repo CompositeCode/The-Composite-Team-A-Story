@@ -1,0 +1,15 @@
+---
+import type { Post } from '../lib/content';
+interface Props { refs: Post['data']['github']; }
+const { refs } = Astro.props;
+const label = (r: Props['refs'][number]) => {
+  const repo = r.repo ?? r.url.replace(/^https:\/\/github\.com\//, '').split('/').slice(0, 2).join('/');
+  const kinds = { repo: 'Repo', pr: 'PR', issue: 'Issue', commit: 'Commit', release: 'Release' };
+  return `${kinds[r.kind]} · ${repo}${r.number ? ` #${r.number}` : ''}`;
+};
+---
+{refs.length > 0 && (
+  <div class="refs">
+    {refs.map((r) => <a class="badge accent" href={r.url} title={r.title}>{label(r)}</a>)}
+  </div>
+)}

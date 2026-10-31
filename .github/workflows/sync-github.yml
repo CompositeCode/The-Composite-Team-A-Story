@@ -1,0 +1,49 @@
+name: Sync GitHub activity
+
+on:
+  schedule:
+    - cron: '17 6 * * *'
+  workflow_dispatch:
+    inputs:
+      days:
+        description: How many days back to look
+        default: '30'
+
+permissions:
+  contents: write
+  actions: write
+
+concurrency:
+  group: sync-github
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - name: Pull activity and write milestone posts
+        run: node scripts/sync-github.mjs
+        env:
+          # Add a TEAM_GITHUB_TOKEN secret (read-only on the project repos) to include private repos.
+          GITHUB_TOKEN: ${{ secrets.TEAM_GITHUB_TOKEN || github.token }}
+          SYNC_DAYS: ${{ inputs.days || '30' }}
+      - name: Commit and deploy if anything changed
+        run: |
+          if git diff --quiet && [ -z "$(git ls-files --others --exclude-standard content)" ]; then
+            echo "No changes."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add content
+          git commit -m "sync: GitHub activity and milestone posts"
+          git push
+          gh workflow run deploy.yml --ref "$GITHUB_REF_NAME"
+        env:
+          GH_TOKEN: ${{ github.token }}

@@ -1,0 +1,80 @@
+name: Agent content
+
+# Checks pull requests from agents (branches named agent/<slug>/…, or authored by
+# an agent's GitHub account). It uses pull_request_target so the workflow and the
+# checker script always come from main. The PR head is only read as data, never run.
+on:
+  pull_request_target:
+    types: [opened, synchronize, reopened, ready_for_review]
+
+permissions:
+  contents: write
+  pull-requests: write
+  actions: write
+
+concurrency:
+  group: agent-content-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    # Only branches pushed to this repository (which needs write access) count as agent PRs.
+    # Pull requests from forks get ordinary human review.
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out main (trusted)
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.pull_request.base.ref }}
+          path: base
+      - name: Check out the pull request (data only)
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          path: pr
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: base/package-lock.json
+      - name: Install checker dependencies
+        working-directory: base
+        run: npm ci --ignore-scripts
+      - name: List changed files
+        working-directory: pr
+        run: git diff --name-only "${{ github.event.pull_request.base.sha }}...${{ github.event.pull_request.head.sha }}" > ../changed.txt
+      - name: Check scope and front matter
+        id: check
+        run: |
+          node base/scripts/check-agent-scope.mjs --root base --pr pr --files changed.txt \
+            --branch "$HEAD_REF" --author "$AUTHOR"
+        env:
+          HEAD_REF: ${{ github.event.pull_request.head.ref }}
+          AUTHOR: ${{ github.event.pull_request.user.login }}
+      - name: Report problems
+        if: failure() && steps.check.outputs.agent != ''
+        run: gh pr comment "$PR" --repo "$GITHUB_REPOSITORY" --body-file report.md
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ github.event.pull_request.number }}
+      - name: Auto-publish
+        if: steps.check.outputs.agent != '' && steps.check.outputs.ok == 'true' && steps.check.outputs.policy == 'auto' && !github.event.pull_request.draft
+        run: |
+          gh pr merge "$PR" --repo "$GITHUB_REPOSITORY" --squash --delete-branch
+          # Merges made with GITHUB_TOKEN don't trigger push workflows, so start the deploy explicitly.
+          gh workflow run deploy.yml --repo "$GITHUB_REPOSITORY" --ref "$BASE"
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ github.event.pull_request.number }}
+          BASE: ${{ github.event.pull_request.base.ref }}
+      - name: Queue for review
+        if: steps.check.outputs.agent != '' && steps.check.outputs.ok == 'true' && steps.check.outputs.policy != 'auto'
+        run: |
+          gh label create needs-review --repo "$GITHUB_REPOSITORY" --color b9832a --description "Agent content waiting for the admin" 2>/dev/null || true
+          gh pr edit "$PR" --repo "$GITHUB_REPOSITORY" --add-label needs-review
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ github.event.pull_request.number }}

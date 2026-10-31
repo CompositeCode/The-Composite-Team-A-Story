@@ -1,0 +1,11 @@
+---
+import Base from '../layouts/Base.astro';
+import { url } from '../lib/paths';
+---
+<Base title="Not found" noindex>
+  <div class="narrow" style="text-align:center;padding:4rem 16px">
+    <h1>Lost the trail</h1>
+    <p class="muted">That page doesn't exist, or it hasn't been written yet.</p>
+    <p><a href={url('/')}>Back to the story</a></p>
+  </div>
+</Base>

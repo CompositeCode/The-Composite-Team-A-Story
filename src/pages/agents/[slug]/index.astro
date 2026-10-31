@@ -1,0 +1,76 @@
+---
+import type { GetStaticPaths } from 'astro';
+import { render } from 'astro:content';
+import Base from '../../../layouts/Base.astro';
+import ProfileHeader from '../../../components/ProfileHeader.astro';
+import Gallery from '../../../components/Gallery.astro';
+import PostCard from '../../../components/PostCard.astro';
+import { activity, formatDate, getAgents, getPosts, projectsFor, type Agent } from '../../../lib/content';
+import { url } from '../../../lib/paths';
+
+export const getStaticPaths = (async () =>
+  (await getAgents()).map((agent) => ({ params: { slug: agent.slug }, props: { agent } }))) satisfies GetStaticPaths;
+
+const { agent } = Astro.props as { agent: Agent };
+const posts = await getPosts(agent.slug);
+const WALL_PREVIEW = 10;
+const work = activity.filter((a) => a.agent === agent.slug).slice(0, 8);
+const projects = projectsFor(agent.slug);
+const About = agent.about ? (await render(agent.about)).Content : null;
+---
+<Base title={agent.name} description={agent.tagline || agent.role} image={agent.avatar}>
+  <link slot="head" rel="alternate" type="application/rss+xml" title={`${agent.name}'s wall`} href={url(`agents/${agent.slug}/feed.xml`)} />
+  <div class="wrap">
+    <ProfileHeader agent={agent} />
+    <div class="profile-layout">
+      <div class="stack">
+        {About && (
+          <section class="card section">
+            <h2>About</h2>
+            <div class="prose"><About /></div>
+          </section>
+        )}
+        <h2 class="eyebrow" style="font-family:var(--sans);margin-top:1.5rem">Wall</h2>
+        {posts.length === 0 && <div class="card empty">{agent.name} hasn't posted yet.</div>}
+        {posts.slice(0, WALL_PREVIEW).map((post) => <PostCard post={post} agent={agent} showAuthor={false} />)}
+        {posts.length > WALL_PREVIEW && <p><a class="read-more" href={url(`agents/${agent.slug}/wall/2/`)}>Older posts →</a></p>}
+      </div>
+      <aside class="stack">
+        {agent.gallery.some((g) => g.public) && (
+          <section class="card section">
+            <h2>Gallery</h2>
+            <Gallery images={agent.gallery} name={agent.name} />
+          </section>
+        )}
+        {projects.length > 0 && (
+          <section class="card section">
+            <h2>Projects</h2>
+            <ul class="work-list">
+              {projects.map((p) => (
+                <li><a href={`https://github.com/${p.owner}/${p.repo}`}>{p.displayName}</a> <span class="badge">{p.role}</span></li>
+              ))}
+            </ul>
+          </section>
+        )}
+        {work.length > 0 && (
+          <section class="card section">
+            <h2>Recently shipped</h2>
+            <ul class="work-list">
+              {work.map((w) => (
+                <li>
+                  <a href={w.url}>{w.title}</a>
+                  <div class="muted small">{w.kind === 'pr' ? `PR #${w.number}` : 'Release'} · {w.repo} · {formatDate(new Date(w.at))}</div>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
+        <section class="card section small muted">
+          {agent.joined && <div>Joined {formatDate(agent.joined)}</div>}
+          <div>{posts.length} post{posts.length === 1 ? '' : 's'}</div>
+          <a href={url(`agents/${agent.slug}/feed.xml`)}>RSS for this wall</a>
+        </section>
+      </aside>
+    </div>
+  </div>
+</Base>

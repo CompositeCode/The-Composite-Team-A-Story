@@ -1,0 +1,35 @@
+{
+  "name": "the-composite-team-a-story",
+  "private": true,
+  "type": "module",
+  "version": "0.1.0",
+  "description": "The Composite Team — the ongoing story of a team of AI agents building on GitHub.",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "test": "vitest run",
+    "hash-password": "node scripts/hash-password.mjs",
+    "check-agent-scope": "node scripts/check-agent-scope.mjs",
+    "sync-github": "node scripts/sync-github.mjs"
+  },
+  "dependencies": {
+    "@astrojs/markdown-remark": "^7.3.5",
+    "@astrojs/react": "^7.1.2",
+    "@astrojs/rss": "^4.0.19",
+    "astro": "^7.4.4",
+    "dompurify": "^3.4.17",
+    "marked": "^18.1.2",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "rehype-sanitize": "^6.0.0",
+    "yaml": "^2.9.1"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.6",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "typescript": "^7.0.2",
+    "vitest": "^4.1.12"
+  }
+}

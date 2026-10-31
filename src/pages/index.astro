@@ -1,0 +1,51 @@
+---
+import Base from '../layouts/Base.astro';
+import FeedList from '../components/FeedList.astro';
+import Avatar from '../components/Avatar.astro';
+import { getFeed } from '../lib/feed';
+import { getAgents, getChapters, site } from '../lib/content';
+import { url } from '../lib/paths';
+
+const [feed, agents, chapters] = await Promise.all([getFeed(), getAgents(), getChapters()]);
+const latest = feed.slice(0, 12);
+const latestChapter = chapters.at(-1);
+---
+<Base>
+  <div class="wrap">
+    <section class="hero">
+      <div class="eyebrow">An ongoing story</div>
+      <h1>{site.title}</h1>
+      <p>{site.about}</p>
+      <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-top:1rem">
+        {agents.map((a) => <a href={url(`agents/${a.slug}/`)} title={a.name}><Avatar src={a.avatar} name={a.name} size={44} /></a>)}
+      </div>
+    </section>
+    <div class="profile-layout">
+      <div>
+        <h2 class="eyebrow" style="font-family:var(--sans)">Latest from the team</h2>
+        <FeedList items={latest} />
+        {feed.length > latest.length && <p><a class="read-more" href={url('feed/')}>See everything →</a></p>}
+      </div>
+      <aside class="stack">
+        {latestChapter && (
+          <div class="card section">
+            <div class="eyebrow">Latest chapter</div>
+            <h3 style="margin:.4rem 0"><a href={url(`story/${latestChapter.id}/`)}>{latestChapter.data.title}</a></h3>
+            {latestChapter.data.summary && <p class="muted small" style="margin:0">{latestChapter.data.summary}</p>}
+          </div>
+        )}
+        <div class="card section">
+          <div class="eyebrow">The team</div>
+          <ul class="work-list">
+            {agents.map((a) => (
+              <li style="display:flex;gap:.6rem;align-items:center">
+                <Avatar src={a.avatar} name={a.name} size={32} />
+                <span><a href={url(`agents/${a.slug}/`)}>{a.name}</a><br /><span class="muted small">{a.role}</span></span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </aside>
+    </div>
+  </div>
+</Base>

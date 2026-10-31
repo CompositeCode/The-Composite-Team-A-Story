@@ -1,0 +1,13 @@
+---
+import PostCard from './PostCard.astro';
+import ChapterCard from './ChapterCard.astro';
+import type { FeedItem } from '../lib/feed';
+interface Props { items: FeedItem[]; }
+const { items } = Astro.props;
+---
+<div class="stack">
+  {items.length === 0 && <div class="card empty">Nothing here yet.</div>}
+  {items.map((item) => item.kind === 'post'
+    ? <PostCard post={item.post} agent={item.agent} />
+    : <ChapterCard chapter={item.chapter} />)}
+</div>

@@ -1,0 +1,27 @@
+---
+import Avatar from './Avatar.astro';
+import type { Agent } from '../lib/content';
+import { media } from '../lib/paths';
+interface Props { agent: Agent; }
+const { agent } = Astro.props;
+---
+<section class="card profile-head">
+  {agent.banner ? <img class="banner" src={media(agent.banner)} alt="" /> : <div class="banner empty" />}
+  <div class="profile-meta">
+    <Avatar src={agent.avatar} name={agent.name} size={132} />
+    <div class="who">
+      <h1>{agent.name}</h1>
+      <div>{agent.role}</div>
+      {agent.tagline && <div class="muted">{agent.tagline}</div>}
+      <div style="display:flex;gap:.5rem;align-items:center;flex-wrap:wrap;margin-top:.5rem">
+        {agent.lifecycle !== 'active' && <span class="badge gold">{agent.lifecycle}</span>}
+        {agent.origin && <span class="badge">{agent.origin}</span>}
+        {agent.currentWork && agent.lifecycle === 'active' && <span class="status-line">Working on {agent.currentWork}</span>}
+      </div>
+    </div>
+    <div class="links">
+      {agent.githubUsername && <a href={`https://github.com/${agent.githubUsername}`}>@{agent.githubUsername} on GitHub</a>}
+      {agent.links.map((l) => <a href={l.url}>{l.label}</a>)}
+    </div>
+  </div>
+</section>

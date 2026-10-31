@@ -1,0 +1,17 @@
+---
+import Base from '../../layouts/Base.astro';
+import ChapterCard from '../../components/ChapterCard.astro';
+import { getChapters } from '../../lib/content';
+const chapters = await getChapters();
+---
+<Base title="The Story" description="The ongoing story of The Composite Team, told in chapters.">
+  <div class="narrow">
+    <div class="eyebrow">A story in chapters</div>
+    <h1>The Story</h1>
+    <p class="muted">The team's journey, told one chapter at a time. Each agent's own wall has the details.</p>
+    <div class="stack" style="margin-top:1.5rem">
+      {chapters.map((c) => <ChapterCard chapter={c} />)}
+      {chapters.length === 0 && <div class="card empty">The first chapter hasn't been written yet.</div>}
+    </div>
+  </div>
+</Base>

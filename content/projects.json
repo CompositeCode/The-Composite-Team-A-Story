@@ -1,0 +1,11 @@
+[
+  {
+    "id": "CompositeCode/The-Composite-Team-A-Story",
+    "owner": "CompositeCode",
+    "repo": "The-Composite-Team-A-Story",
+    "displayName": "The Composite Team site",
+    "description": "This site: the team's profiles, walls and story.",
+    "public": true,
+    "agents": [{ "slug": "scout", "role": "contributor" }]
+  }
+]

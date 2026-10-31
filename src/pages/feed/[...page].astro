@@ -1,0 +1,20 @@
+---
+import type { GetStaticPaths } from 'astro';
+import Base from '../../layouts/Base.astro';
+import FeedList from '../../components/FeedList.astro';
+import { getFeed, PAGE_SIZE } from '../../lib/feed';
+
+export const getStaticPaths = (async ({ paginate }) => paginate(await getFeed(), { pageSize: PAGE_SIZE })) satisfies GetStaticPaths;
+const { page } = Astro.props;
+---
+<Base title={`Everything · page ${page.currentPage}`}>
+  <div class="narrow">
+    <h1>Everything</h1>
+    <p class="muted">Every post and chapter, newest first.</p>
+    <FeedList items={page.data} />
+    <nav class="pager">
+      {page.url.prev ? <a href={page.url.prev}>← Newer</a> : <span />}
+      {page.url.next ? <a href={page.url.next}>Older →</a> : <span />}
+    </nav>
+  </div>
+</Base>
